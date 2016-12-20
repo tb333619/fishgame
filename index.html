@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		
+		html,
+		body {
+			height: 100%;
+			overflow: hidden;
+			background: black;
+			text-align: center;
+		}
+		
+		#c {
+			background: url("img/game_bg_2_hd.jpg") no-repeat;
+		}
+	</style>
+	<script src="js/resource.js"></script>
+	<script src="js/base.js"></script>
+	<script src="js/Fish.js"></script>
+	<script src="js/cannon.js"></script>
+	<script src="js/bullet.js"></script>
+	<script>
+		window.onload = function() {
+			var oC = document.getElementById('c');
+			var gd = oC.getContext('2d');
+			var out = 50;
+			var rule = 0.2;
+			var direction = [-out, out];
+			loadImage(resource, function() {
+				/*存鱼*/
+				var arrFish = [];
+				/*存炮弹*/
+				var arrBullet = [];
+				/*炮*/
+				var c1 = new Cannon(4);
+				
+				setInterval(function() {
+					gd.clearRect(0, 0, oC.width, oC.height);
+					/*炮台*/
+					gd.drawImage(JSON['bottom'],
+						0, 0, 765, 70,
+						0, oC.height - 70, 765, 70
+					);
+
+					/*生鱼*/
+					if(Math.random() < rule) {
+						direction.sort(function() {
+							return Math.random() - 0.5;
+						});
+						if(direction[0] < 0) {
+							var f1 = new Fish(rnd(1, 6));
+							f1.x = -out;
+							f1.y = rnd(out, oC.height - out);
+							f1.rotate = rnd(-45, 45);
+							arrFish.push(f1);
+						} else {
+							var f1 = new Fish(rnd(1, 6));
+							f1.x = oC.width + out;
+							f1.y = rnd(out, oC.height - out);
+							f1.rotate = rnd(135, 225);
+							arrFish.push(f1);
+						}
+					}
+
+					/*画鱼*/
+					for(var i = 0; i < arrFish.length; i++) {
+						arrFish[i].draw(gd);
+					}
+					/*画炮*/
+					c1.draw(gd);
+					//2.画炮弹
+					for(var i = 0; i < arrBullet.length; i++) {
+						arrBullet[i].draw(gd);
+					}
+
+					for(var i = 0; i < arrFish.length; i++) {
+						for(var j = 0; j < arrBullet.length; j++) {
+							if(arrFish[i].isIn(arrBullet[j].x, arrBullet[j].y)) {
+								var type = arrFish[i].type;
+								var x = arrFish[i].x;
+								var y = arrFish[i].y;
+								var rotate = arrFish[i].rotate;
+								//干掉子弹
+								arrBullet.splice(j, 1);
+								j--;
+								//干掉鱼
+								arrFish.splice(i, 1);
+								i--;
+
+							}
+						}
+					}
+
+				}, 16);
+
+				oC.onmousemove = function(ev) {
+					/*炮抖动*/
+					c1.emit();
+					/*角度*/
+					var x = ev.clientX - c1.x - oC.offsetLeft;
+					var y = c1.y - (ev.clientY - oC.offsetTop);
+					var d = 90 - a2d(Math.atan2(y, x));
+					c1.rotate = d;
+					/*画炮弹*/
+					var bullet = new Bullet(c1.type);
+					bullet.x = c1.x;
+					bullet.y = c1.y;
+					bullet.rotate = c1.rotate;
+					arrBullet.push(bullet);
+					console.log(arrBullet);
+				}
+			});
+		};
+	</script>
+
+	<body>
+		<canvas id="c" width="800" height="600"></canvas>
+		
+	</body>
+
+</html>
